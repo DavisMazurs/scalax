@@ -44,6 +44,39 @@ class ExpiringCacheSpec extends Specification {
       cache.map.size must eventually(beEqualTo(1))
     }
 
+    "be able to remove value" in new ExpiringCacheScope {
+      cache.map must haveSize(0)
+      cache.queryCount mustEqual 0
+
+      cache.put(0, "0")
+      cache.map must haveSize(1)
+
+      cache.remove(0)
+      cache.map.size must eventually(beEqualTo(0))
+    }
+
+    "remove when expired" in new ExpiringCacheScope {
+      override val cache: ExpiringCache[Int, String] = new ExpiringCache[Int, String](10, TimeUnit.MILLISECONDS, 5)
+      cache.map must haveSize(0)
+      cache.queryCount mustEqual 0
+
+      cache.put(0, "0")
+      cache.map must haveSize(1)
+
+      cache.get(0) must eventually(beNone)
+    }
+
+    "not remove when not expired" in new ExpiringCacheScope {
+      cache.map must haveSize(0)
+      cache.queryCount mustEqual 0
+
+      cache.put(0, "0")
+      cache.map must haveSize(1)
+
+      cache.cleanExpired()
+      cache.map must haveSize(1)
+    }
+
   }
 
   class ExpiringCacheScope extends Scope {
